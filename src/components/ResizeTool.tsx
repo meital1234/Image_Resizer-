@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import LogoutButton from './LogoutButton'
 
 interface Props {
@@ -15,6 +16,8 @@ interface ResizeResults {
 }
 
 export default function ResizeTool({ initialCredits, email }: Props) {
+  const router = useRouter()
+
   // ── Credits (updated locally after each resize) ───────────────────────────
   const [credits, setCredits] = useState(initialCredits)
 
@@ -41,6 +44,7 @@ export default function ResizeTool({ initialCredits, email }: Props) {
   // ── UI state ──────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   // Keep track of object URLs so we can revoke them and avoid memory leaks
   const objectUrlRef = useRef<string | null>(null)
@@ -141,6 +145,40 @@ export default function ResizeTool({ initialCredits, email }: Props) {
     setError('')
   }
 
+  async function handleDeleteAccount() {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete your account? This cannot be undone.'
+    )
+    if (!confirmed) return
+
+    setDeleting(true)
+    try {
+      console.log('[delete] 1 — sending DELETE /api/users/me')
+      const res = await fetch('/api/users/me', {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      console.log('[delete] 2 — response received. status:', res.status, 'ok:', res.ok)
+
+      if (!res.ok) {
+        const data = await res.json()
+        alert(data.error ?? 'Failed to delete account. Please try again.')
+        setDeleting(false)
+        return
+      }
+
+      console.log('[delete] 3 — calling router.push(/signup)')
+      router.push('/signup')
+      console.log('[delete] 4 — calling router.refresh()')
+      router.refresh()
+      console.log('[delete] 5 — done, no error')
+    } catch (err) {
+      console.error('[delete] CAUGHT ERROR:', err)
+      alert('Network error. Please try again.')
+      setDeleting(false)
+    }
+  }
+
   // ── Credit warning helpers ────────────────────────────────────────────────
   const outOfCredits = credits === 0
   const almostOut = credits > 0 && credits < 2
@@ -168,6 +206,14 @@ export default function ResizeTool({ initialCredits, email }: Props) {
             {credits} {credits === 1 ? 'credit' : 'credits'}
           </span>
           <LogoutButton />
+          <span className="text-gray-300">·</span>
+          <button
+            onClick={handleDeleteAccount}
+            disabled={deleting}
+            className="text-xs text-red-400 hover:text-red-600 disabled:opacity-50 transition-colors"
+          >
+            {deleting ? 'Deleting…' : 'Delete account'}
+          </button>
         </div>
       </header>
 
