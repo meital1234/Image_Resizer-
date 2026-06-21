@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import LogoutButton from './LogoutButton'
+import { useRouter } from 'next/navigation'
 
 interface Props {
   initialCredits: number
-  email: string
+  name: string
 }
 
 interface ResizeResults {
@@ -14,7 +14,9 @@ interface ResizeResults {
   dimensions: { width: number; height: number }
 }
 
-export default function ResizeTool({ initialCredits, email }: Props) {
+export default function ResizeTool({ initialCredits, name }: Props) {
+  const router = useRouter()
+
   // ── Credits (updated locally after each resize) ───────────────────────────
   const [credits, setCredits] = useState(initialCredits)
 
@@ -41,20 +43,45 @@ export default function ResizeTool({ initialCredits, email }: Props) {
   // ── UI state ──────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
 
-  // Keep track of object URLs so we can revoke them and avoid memory leaks
+  // ── Refs ──────────────────────────────────────────────────────────────────
+  // Tracks the current object URL so we can revoke it and avoid memory leaks
   const objectUrlRef = useRef<string | null>(null)
+  // Wraps the avatar button + dropdown for click-outside detection
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Revoke the object URL when the component unmounts
   useEffect(() => {
     return () => {
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
     }
   }, [])
 
+  // Close the dropdown when the user clicks anywhere outside it
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [menuOpen])
+
+  // ── Avatar ────────────────────────────────────────────────────────────────
+  const initial = name.trim()[0]?.toUpperCase() ?? '?'
+
+  // ── Handlers ─────────────────────────────────────────────────────────────
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0] ?? null
     setFile(f)
     if (f) {
-      // Revoke the previous object URL before creating a new one
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
       const objUrl = URL.createObjectURL(f)
       objectUrlRef.current = objUrl
@@ -66,7 +93,6 @@ export default function ResizeTool({ initialCredits, email }: Props) {
     e.preventDefault()
     setError('')
 
-    // ── Client-side validation ────────────────────────────────────────────
     if (inputType === 'url' && !url.trim()) {
       setError('Please enter an image URL.')
       return
@@ -90,7 +116,6 @@ export default function ResizeTool({ initialCredits, email }: Props) {
 
     setLoading(true)
 
-    // ── Build FormData ────────────────────────────────────────────────────
     const form = new FormData()
 
     if (inputType === 'url') {
@@ -110,7 +135,6 @@ export default function ResizeTool({ initialCredits, email }: Props) {
     }
     form.append('bgColor', bgColor)
 
-    // ── Call the API ──────────────────────────────────────────────────────
     try {
       const res = await fetch('/api/resize', {
         method: 'POST',
@@ -141,14 +165,49 @@ export default function ResizeTool({ initialCredits, email }: Props) {
     setError('')
   }
 
-  // ── Credit warning helpers ────────────────────────────────────────────────
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    router.push('/login')
+    router.refresh()
+  }
+
+  async function handleDeleteAccount() {
+    // Close the dropdown before showing the native confirm dialog
+    setMenuOpen(false)
+
+    const confirmed = window.confirm(
+      'Are you sure you want to delete your account? This cannot be undone.'
+    )
+    if (!confirmed) return
+
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/users/me', {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        alert(data.error ?? 'Failed to delete account. Please try again.')
+        setDeleting(false)
+        return
+      }
+
+      router.push('/signup')
+      router.refresh()
+    } catch {
+      alert('Network error. Please try again.')
+      setDeleting(false)
+    }
+  }
+
+  // ── Derived state ─────────────────────────────────────────────────────────
   const outOfCredits = credits === 0
   const almostOut = credits > 0 && credits < 2
 
-  // ── Shared input field class ──────────────────────────────────────────────
   const inputClass =
     'w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-
   const tabActiveClass = 'bg-blue-600 text-white'
   const tabInactiveClass = 'bg-gray-100 text-gray-700 hover:bg-gray-200'
 
@@ -158,16 +217,61 @@ export default function ResizeTool({ initialCredits, email }: Props) {
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <header className="bg-white border-b px-6 py-4 flex items-center justify-between">
         <h1 className="text-xl font-bold">Image Resizer</h1>
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-gray-500">{email}</span>
+
+        <div className="flex items-center gap-4">
+          {/* Credits count */}
           <span
-            className={`font-semibold ${
+            className={`text-sm font-semibold ${
               outOfCredits ? 'text-red-600' : almostOut ? 'text-orange-500' : 'text-gray-700'
             }`}
           >
             {credits} {credits === 1 ? 'credit' : 'credits'}
           </span>
-          <LogoutButton />
+
+          {/* Avatar button + dropdown — menuRef covers both so click-outside works */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen(prev => !prev)}
+              aria-label="Account menu"
+              className="w-9 h-9 rounded-full bg-blue-600 text-white text-sm font-bold
+                flex items-center justify-center
+                hover:bg-blue-700 transition-colors
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              {initial}
+            </button>
+
+            {menuOpen && (
+              <div
+                className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg
+                  border border-gray-100 py-1 z-10"
+              >
+                {/* Full name — read-only label */}
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
+                </div>
+
+                {/* Log out */}
+                <button
+                  onClick={() => { setMenuOpen(false); handleLogout() }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700
+                    hover:bg-gray-50 transition-colors"
+                >
+                  Log out
+                </button>
+
+                {/* Delete account */}
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleting}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600
+                    hover:bg-red-50 disabled:opacity-50 transition-colors"
+                >
+                  {deleting ? 'Deleting…' : 'Delete account'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -363,7 +467,6 @@ export default function ResizeTool({ initialCredits, email }: Props) {
           <div>
             {/* Controls row */}
             <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-              {/* Strategy toggle */}
               <div className="flex gap-2">
                 <button
                   onClick={() => setStrategy('cover')}
@@ -394,7 +497,6 @@ export default function ResizeTool({ initialCredits, email }: Props) {
 
             {/* Side-by-side panels */}
             <div className="grid grid-cols-2 gap-4">
-
               {/* Left: original */}
               <div className="bg-white rounded-lg border p-4">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
@@ -406,8 +508,7 @@ export default function ResizeTool({ initialCredits, email }: Props) {
                   alt="Original"
                   className="w-full max-h-[420px] object-contain"
                   onError={e => {
-                    ;(e.currentTarget as HTMLImageElement).alt =
-                      'Could not load original image'
+                    ;(e.currentTarget as HTMLImageElement).alt = 'Could not load original image'
                   }}
                 />
               </div>

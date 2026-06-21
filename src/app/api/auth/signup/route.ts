@@ -4,7 +4,11 @@ import { User } from '@/models/User'
 import { hashPassword, getSession } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
-  const { email, password } = await req.json()
+  const { name, email, password } = await req.json()
+
+  if (!name || !name.trim()) {
+    return NextResponse.json({ error: 'Name is required' }, { status: 400 })
+  }
 
   if (!email || !password) {
     return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
@@ -23,6 +27,7 @@ export async function POST(req: NextRequest) {
 
   const hashed = await hashPassword(password)
   const user = await User.create({
+    name: name.trim(),
     email: email.toLowerCase().trim(),
     password: hashed,
     credits: 5,
