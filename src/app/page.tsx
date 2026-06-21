@@ -15,7 +15,7 @@ export default async function Home() {
   return (
     <ResizeTool
       initialCredits={user.credits}
-      email={user.email}
+      name={user.name}
     />
   )
 }

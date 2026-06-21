@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose'
 
 export interface IUser extends Document {
+  name: string
   email: string
   password: string  // bcrypt hash, never the plain text
   credits: number
@@ -10,6 +11,11 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
   {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     email: {
       type: String,
       required: true,
