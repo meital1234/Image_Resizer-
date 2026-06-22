@@ -161,35 +161,28 @@ Social media thumbnails often benefit from **Cover**, while product images and d
 
 ### Login Page
 
-[Insert Screenshot Here]
+<img src="screenshots/login.png" width="600">
 
 ### Registration Page
 
-[Insert Screenshot Here]
+<img src="screenshots/registration.png" width="600">
 
 ### Main Application
 
-[Insert Screenshot Here]
+<img src="screenshots/main.png" width="600">
 
 ### Image Upload
 
-[Insert Screenshot Here]
+<img src="screenshots/i_upload.png" width="600">
 
 ### Resize Results
 
-[Insert Screenshot Here]
+<img src="screenshots/cover_resize.png" width="600">
+<img src="screenshots/contain_resize.png" width="600">
 
 ### Avatar Dropdown Menu
 
-[Insert Screenshot Here]
-
-### MongoDB Atlas
-
-[Insert Screenshot Here]
-
-### Railway Deployment
-
-[Insert Screenshot Here]
+<img src="screenshots/avatar.png" width="600">
 
 ---
 
