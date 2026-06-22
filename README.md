@@ -1,174 +1,247 @@
 # Image Resizer
 
+## Live Demo
+
+The application is deployed and available online:
+
+**https://imageresizer-production.up.railway.app**
+
+No local installation is required for evaluation. The application can be tested directly through the live deployment.
+
+---
+
 ## Project Overview
 
-Image Resizer is a web application that allows users to register, log
-in, upload images, resize them, and manage their account.
+Image Resizer is a full-stack web application that allows users to:
 
-------------------------------------------------------------------------
+- Create an account
+- Log in securely
+- Upload an image or provide an image URL
+- Resize images using two different resizing strategies
+- Compare the results side by side
+- Manage credits
+- Delete their account
+
+The project was built using Next.js, MongoDB Atlas, Mongoose, Railway, and Sharp.
+
+---
 
 ## Features
 
 ### User Management
 
--   User registration
--   User login
--   Session-based authentication
--   User deletion
+- User registration
+- User login
+- Session-based authentication using iron-session
+- Persistent login sessions
+- Account deletion
 
 ### Image Processing
 
--   Upload image
--   Resize image
--   Download resized image
+- Upload local image files
+- Resize images from image URLs
+- Support for custom dimensions
+- Support for aspect-ratio-based resizing
+- Background color selection for letterboxing
+- Side-by-side comparison of resize strategies
 
-------------------------------------------------------------------------
+### Credit System
+
+- Users start with credits
+- Each resize operation consumes one credit
+- Credits are updated atomically in MongoDB
+- Low-credit warnings are displayed in the UI
+
+### User Interface
+
+- User avatar based on the first letter of the user's name
+- Dropdown menu with user name, logout, and delete account
+- Responsive and simple interface
+
+---
 
 ## Technologies Used
 
 ### Frontend
-
--   Next.js
--   React
--   CSS
+- Next.js 14
+- React
+- TypeScript
 
 ### Backend
-
--   Next.js API Routes
--   Node.js
+- Next.js API Routes
+- Node.js
 
 ### Database
+- MongoDB Atlas
+- Mongoose
 
--   MongoDB Atlas
--   Mongoose
+### Authentication
+- iron-session
+
+### Image Processing
+- Sharp
 
 ### Deployment
+- Railway
 
--   Railway
+---
 
-------------------------------------------------------------------------
+## Running Locally
 
-## Project Structure
+### 1. Clone the repository
 
-``` text
-src/
-├── app/
-├── components/
-├── models/
-├── lib/
-├── middleware/
-└── api/
+```bash
+git clone <repository-url>
+cd Image_Resizer
 ```
 
-------------------------------------------------------------------------
+### 2. Install dependencies
 
-## Environment Variables
+```bash
+npm install
+```
 
-Create a `.env.local` file:
+### 3. Create a `.env.local` file
 
-``` env
+```env
 MONGODB_URI=<your_mongodb_connection_string>
 SESSION_SECRET=<your_session_secret>
 ```
 
-------------------------------------------------------------------------
+### 4. Start the development server
 
-## Running Locally
-
-Install dependencies:
-
-``` bash
-npm install
-```
-
-Run development server:
-
-``` bash
+```bash
 npm run dev
 ```
 
-Open:
+### 5. Open the application
 
-``` text
+```text
 http://localhost:3000
 ```
 
-------------------------------------------------------------------------
+---
 
-## Deployment
+## Resize Strategy Tradeoff
 
-The application is deployed on Railway and connected to MongoDB Atlas.
+### Cover
 
-### Deployment Steps
+The image is resized so that it completely fills the target dimensions.
 
-1.  Push project to GitHub.
-2.  Create Railway project.
-3.  Connect GitHub repository.
-4.  Configure environment variables.
-5.  Deploy application.
-6.  Configure MongoDB Atlas access and database user.
+**Advantages**
+- No empty space is visible.
+- Produces visually consistent thumbnails.
+- Useful for profile pictures and previews.
 
-------------------------------------------------------------------------
+**Disadvantages**
+- Parts of the image may be cropped.
+- Important content near the edges can be lost.
 
-# Screenshots
+### Contain
 
-## Login Page
+The entire image remains visible while fitting inside the target dimensions.
 
-\[Insert Screenshot Here\]
+**Advantages**
+- No image content is lost.
+- Preserves the complete image.
 
-------------------------------------------------------------------------
+**Disadvantages**
+- May add padding (letterboxing).
+- Does not completely fill the target area.
 
-## Registration Page
+### Why Both Strategies Are Useful
 
-\[Insert Screenshot Here\]
+Different use cases require different behavior.
 
-------------------------------------------------------------------------
+Social media thumbnails often benefit from **Cover**, while product images and documents usually benefit from **Contain** because preserving all content is more important than filling the available space.
 
-## Main Dashboard
+---
 
-\[Insert Screenshot Here\]
+## Screenshots
 
-------------------------------------------------------------------------
+### Login Page
 
-## Upload Image
+[Insert Screenshot Here]
 
-\[Insert Screenshot Here\]
+### Registration Page
 
-------------------------------------------------------------------------
+[Insert Screenshot Here]
 
-## Resize Result
+### Main Application
 
-\[Insert Screenshot Here\]
+[Insert Screenshot Here]
 
-------------------------------------------------------------------------
+### Image Upload
 
-## MongoDB Atlas
+[Insert Screenshot Here]
 
-\[Insert Screenshot Here\]
+### Resize Results
 
-------------------------------------------------------------------------
+[Insert Screenshot Here]
 
-## Railway Deployment
+### Avatar Dropdown Menu
 
-\[Insert Screenshot Here\]
+[Insert Screenshot Here]
 
-------------------------------------------------------------------------
+### MongoDB Atlas
 
-# Testing
+[Insert Screenshot Here]
 
-The following functionality was tested:
+### Railway Deployment
 
--   Registration
--   Login
--   Session persistence
--   Image upload
--   Image resizing
--   User deletion
--   Database persistence
--   Railway deployment
+[Insert Screenshot Here]
 
-------------------------------------------------------------------------
+---
 
-# Author
+## Testing
 
-Meital Basael
+The following functionality was manually tested:
+
+### Authentication
+
+- Registration
+- Login
+- Logout
+- Session persistence after browser restart
+- Account deletion
+
+### Image Processing
+
+- Resize from image URL
+- Resize from uploaded file
+- Cover strategy
+- Contain strategy
+- Aspect ratio mode
+- Explicit width/height mode
+
+### Credit System
+
+- Credit deduction
+- Low-credit warning
+- Zero-credit handling
+
+### Deployment
+
+- MongoDB Atlas connectivity
+- Railway deployment
+- Production authentication
+- Production image resizing
+
+---
+
+## Future Improvements
+
+Given more time, I would:
+
+- Add automated tests for authentication and image processing flows.
+- Improve validation and error handling.
+- Improve UI polish and feedback.
+- Support extracting product images directly from Amazon product page URLs.
+- Add image history.
+- Improve mobile responsiveness.
+
+---
+
+## Author
+
+**Meital Basael**
