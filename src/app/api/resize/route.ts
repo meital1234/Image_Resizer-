@@ -72,8 +72,13 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 6. Early credit check (fast fail before doing any work) ──────────────
-  await connectDB()
-  const user = await User.findById(session.userId)
+  let user
+  try {
+    await connectDB()
+    user = await User.findById(session.userId)
+  } catch {
+    return NextResponse.json({ error: 'Database error. Please try again.' }, { status: 500 })
+  }
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })
   }
@@ -152,11 +157,16 @@ export async function POST(req: NextRequest) {
   // The { credits: { $gte: 1 } } in the filter means the update only succeeds if
   // the user still has credits at the moment the DB write happens. This prevents
   // two simultaneous requests from both consuming the last credit.
-  const updatedUser = await User.findOneAndUpdate(
-    { _id: session.userId, credits: { $gte: 1 } },
-    { $inc: { credits: -1 } },
-    { new: true }
-  )
+  let updatedUser
+  try {
+    updatedUser = await User.findOneAndUpdate(
+      { _id: session.userId, credits: { $gte: 1 } },
+      { $inc: { credits: -1 } },
+      { new: true }
+    )
+  } catch {
+    return NextResponse.json({ error: 'Database error. Please try again.' }, { status: 500 })
+  }
 
   if (!updatedUser) {
     return NextResponse.json({ error: 'Buy more credits.' }, { status: 402 })

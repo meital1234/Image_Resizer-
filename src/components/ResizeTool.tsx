@@ -112,6 +112,13 @@ export default function ResizeTool({ initialCredits, name }: Props) {
         setError('Please enter a valid height.')
         return
       }
+    } else {
+      const aw = parseInt(aspectW, 10)
+      const ah = parseInt(aspectH, 10)
+      if (!aw || aw <= 0 || !ah || ah <= 0) {
+        setError('Please enter valid aspect ratio values.')
+        return
+      }
     }
 
     setLoading(true)
@@ -189,7 +196,7 @@ export default function ResizeTool({ initialCredits, name }: Props) {
 
       if (!res.ok) {
         const data = await res.json()
-        alert(data.error ?? 'Failed to delete account. Please try again.')
+        setError(data.error ?? 'Failed to delete account. Please try again.')
         setDeleting(false)
         return
       }
@@ -197,7 +204,7 @@ export default function ResizeTool({ initialCredits, name }: Props) {
       router.push('/signup')
       router.refresh()
     } catch {
-      alert('Network error. Please try again.')
+      setError('Network error. Please try again.')
       setDeleting(false)
     }
   }
@@ -317,14 +324,19 @@ export default function ResizeTool({ initialCredits, name }: Props) {
                   className={inputClass}
                 />
               ) : (
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600
-                    file:mr-3 file:py-1 file:px-3 file:rounded file:border-0
-                    file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                />
+                <>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600
+                      file:mr-3 file:py-1 file:px-3 file:rounded file:border-0
+                      file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  {file && (
+                    <p className="mt-1 text-xs text-gray-500 truncate">{file.name}</p>
+                  )}
+                </>
               )}
             </div>
 
@@ -446,7 +458,7 @@ export default function ResizeTool({ initialCredits, name }: Props) {
               </p>
             )}
 
-            {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+            {error && <p role="alert" className="mb-4 text-sm text-red-600">{error}</p>}
 
             <button
               type="submit"
@@ -486,13 +498,23 @@ export default function ResizeTool({ initialCredits, name }: Props) {
                 </button>
               </div>
 
-              <button
-                onClick={handleReset}
-                className="px-4 py-2 text-sm rounded border border-gray-300
-                  text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                ← Resize another image
-              </button>
+              <div className="flex gap-2">
+                <a
+                  href={strategy === 'cover' ? results.cover : results.contain}
+                  download={`resized-${strategy}-${results.dimensions.width}x${results.dimensions.height}.jpg`}
+                  className="px-4 py-2 text-sm rounded bg-blue-600 text-white
+                    hover:bg-blue-700 transition-colors"
+                >
+                  Download
+                </a>
+                <button
+                  onClick={handleReset}
+                  className="px-4 py-2 text-sm rounded border border-gray-300
+                    text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  ← Resize another image
+                </button>
+              </div>
             </div>
 
             {/* Side-by-side panels */}
