@@ -316,13 +316,18 @@ export default function ResizeTool({ initialCredits, name }: Props) {
               </div>
 
               {inputType === 'url' ? (
-                <input
-                  type="url"
-                  value={url}
-                  onChange={e => setUrl(e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                  className={inputClass}
-                />
+                <>
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={e => setUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg or Amazon product URL"
+                    className={inputClass}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Direct image URLs and Amazon product page URLs are supported.
+                  </p>
+                </>
               ) : (
                 <>
                   <input

@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/db'
 import { User } from '@/models/User'
 import { getSession } from '@/lib/auth'
 import { resizeImage } from '@/lib/resize'
+import { isAmazonUrl, extractAmazonImage } from '@/lib/amazon'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB in bytes
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp']
@@ -115,12 +116,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'URL must use http or https' }, { status: 400 })
     }
 
+    // Amazon product page: scrape the direct image URL before the normal fetch.
+    // Non-Amazon URLs skip this block entirely — existing behavior is unchanged.
+    let resolvedUrl = urlStr
+    if (isAmazonUrl(urlStr)) {
+      try {
+        resolvedUrl = await extractAmazonImage(urlStr)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Could not extract image from Amazon page'
+        return NextResponse.json({ error: message }, { status: 400 })
+      }
+    }
+
     let fetchResponse: Response
     try {
-      fetchResponse = await fetch(urlStr, {
-        signal: AbortSignal.timeout(10_000), // 10-second timeout
+      fetchResponse = await fetch(resolvedUrl, {
+        signal: AbortSignal.timeout(10_000),
       })
-    } catch {
+    } catch (err) {
+      const name = err instanceof Error ? err.name : ''
+      if (name === 'TimeoutError' || name === 'AbortError') {
+        return NextResponse.json(
+          { error: 'Image URL request timed out. Please try a smaller image or another URL.' },
+          { status: 408 }
+        )
+      }
       return NextResponse.json({ error: 'Failed to fetch image from URL' }, { status: 400 })
     }
 
