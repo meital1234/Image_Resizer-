@@ -47,7 +47,7 @@ The project was built using Next.js, MongoDB Atlas, Mongoose, Railway, and Sharp
 
 ### Credit System
 
-- Users start with credits
+- Users start with 5 credits
 - Each resize operation consumes one credit
 - Credits are updated atomically in MongoDB
 - Low-credit warnings are displayed in the UI
