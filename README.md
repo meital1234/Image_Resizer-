@@ -222,16 +222,60 @@ The following functionality was manually tested:
 
 ---
 
+## Bonus Features
+
+### Automated Tests
+
+- Jest was added to the project.
+- `resizeImage` has unit tests covering the core resizing logic.
+- Amazon URL helper functions have unit tests.
+- Run all tests with:
+
+```bash
+npm test
+```
+
+### Validation / Error Handling / UI Polish
+
+- Improved input validation for signup, login, and resize forms.
+- Friendly error messages for invalid URLs, oversized remote images, timeout or network failures, and Amazon extraction failures.
+- The UI now displays the selected filename when uploading a file, a download button for the resized result, and inline error messages.
+
+### Amazon Product URL Support
+
+- Users can paste an Amazon product page URL instead of a direct image URL.
+- The app extracts the ASIN from URLs of the form `/dp/B003TG75EG` and builds an Amazon image CDN URL automatically.
+- If no ASIN is found, it falls back to best-effort HTML parsing to locate a product image.
+- This approach avoids most Amazon hotlink-blocking issues.
+
+ when an Amazon product page URL is used, the resized output is produced correctly, but the "Original" preview panel may not display the product image. This happens because the client still holds the original Amazon product page URL, not the resolved image URL.
+
+---
+
+## Example URLs for Testing
+
+### Amazon Product URL
+
+```
+https://www.amazon.com/dp/B003TG75EG
+```
+
+### Direct Image URLs
+
+```
+https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png
+```
+
+```
+https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200
+```
+---
+
 ## Future Improvements
 
-Given more time, I would:
-
-- Add automated tests for authentication and image processing flows.
-- Improve validation and error handling.
-- Improve UI polish and feedback.
-- Support extracting product images directly from Amazon product page URLs.
+- Fix the Amazon original preview: currently, when a user pastes an Amazon product page URL, the resized image is produced correctly, but the "Original" preview still shows the Amazon product page URL rather than the resolved image. The fix would be to have the API return the resolved image URL and use it in the frontend for the original preview.
 - Add image history.
-- Improve mobile responsiveness.
+- Add support for more image formats and output options.
 
 ---
 
